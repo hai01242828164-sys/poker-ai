@@ -1,0 +1,73 @@
+import uuid
+import sys
+import os
+from datetime import datetime
+import random
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from app.models.base import Base
+from app.models.game_session import GameSession
+from app.models.player_profile import PlayerProfile
+from app.models.hand_history import HandHistory
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def seed_data():
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    
+    mock_player_id = uuid.UUID("e5b1c900-3b4e-4f6c-8a2b-1a9d4c7a5b3f")
+    player = db.query(PlayerProfile).filter(PlayerProfile.id == mock_player_id).first()
+    if not player:
+        player = PlayerProfile(id=mock_player_id, nickname="Villain_Bluffer", vpip=0.35, pfr=0.25)
+        db.add(player)
+        db.commit()
+    
+    session = GameSession(table_format="6-max", hero_position="BTN", small_blind=1.0, big_blind=2.0)
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    
+    print(f"Bắt đầu bơm dữ liệu vào session: {session.id}...")
+    
+    for i in range(15):
+        is_bluff = random.choice([True, False])
+        if is_bluff:
+            timing = "Suy nghĩ lâu"
+            action = "Raise"
+            sizing = "All-in"
+            hole_cards = "7c 2d"
+        else:
+            timing = "Nhanh"
+            action = "Call"
+            sizing = "1/2 Pot"
+            hole_cards = "As Kd"
+            
+        hand = HandHistory(
+            session_id=session.id,
+            community_cards="Jc 9s 4h",
+            actions_log=[{
+                "player_id": str(mock_player_id),
+                "action": action,
+                "sizing": sizing,
+                "timing_tell": timing
+            }],
+            showdown_ground_truth=[{
+                "player_id": str(mock_player_id),
+                "hole_cards": hole_cards
+            }]
+        )
+        db.add(hand)
+    
+    db.commit()
+    db.close()
+    print("Seeding hoàn tất! Bơm thành công 15 ván bài mẫu để test Machine Learning.")
+
+if __name__ == "__main__":
+    seed_data()

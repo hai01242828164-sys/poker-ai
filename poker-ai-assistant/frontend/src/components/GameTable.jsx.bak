@@ -1,0 +1,364 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import PlayerAvatar from './PlayerAvatar';
+import { startSession, sendAction, getAIPrediction } from '../services/api';
+
+const STREETS = ['PRE_FLOP', 'FLOP', 'TURN', 'RIVER', 'SHOWDOWN'];
+
+function getPositionLabels(numPlayers) {
+    if (numPlayers === 2) return ['SB/BTN', 'BB'];
+    if (numPlayers === 3) return ['BTN', 'SB', 'BB'];
+    const labels = ['SB', 'BB'];
+    if (numPlayers === 4) labels.push('UTG');
+    else if (numPlayers === 5) labels.push('UTG', 'CO');
+    else if (numPlayers === 6) labels.push('UTG', 'MP', 'CO');
+    else if (numPlayers === 7) labels.push('UTG', 'UTG+1', 'MP', 'CO');
+    else if (numPlayers === 8) labels.push('UTG', 'UTG+1', 'MP', 'MP+1', 'CO');
+    else if (numPlayers === 9) labels.push('UTG', 'UTG+1', 'UTG+2', 'MP', 'MP+1', 'CO');
+    else if (numPlayers === 10) labels.push('UTG', 'UTG+1', 'UTG+2', 'MP', 'MP+1', 'MP+2', 'CO');
+    labels.push('BTN');
+    return labels;
+}
+
+const PokerCard = ({ cardStr }) => {
+    const match = cardStr.trim().toLowerCase().match(/^(\d+)([a-d])$/);
+    if (!match) return null;
+    let val = parseInt(match[1]);
+    if (val === 1) val = 'A';
+    else if (val === 11) val = 'J';
+    else if (val === 12) val = 'Q';
+    else if (val === 13) val = 'K';
+    
+    let suit = { s: '?', c: 'text-gray-900' };
+    if (match[2] === 'a') suit = { s: '♥', c: 'text-red-600' };
+    if (match[2] === 'b') suit = { s: '♦', c: 'text-red-600' };
+    if (match[2] === 'c') suit = { s: '♣', c: 'text-gray-900' };
+    if (match[2] === 'd') suit = { s: '♠', c: 'text-gray-900' };
+
+    return (
+        <div className="bg-white rounded w-10 h-14 flex flex-col items-center justify-center border border-gray-400 shadow-md">
+            <div className={`text-base font-bold leading-none ${suit.c}`}>{val}</div>
+            <div className={`text-xl leading-none ${suit.c}`}>{suit.s}</div>
+        </div>
+    );
+};
+
+const RenderCards = ({ input }) => {
+    const parts = input.split(' ').filter(p => p.length >= 2);
+    if (parts.length === 0) return null;
+    return (
+        <div className="flex gap-1 justify-center pointer-events-none my-1">
+            {parts.map((p, i) => <PokerCard key={i} cardStr={p} />)}
+        </div>
+    );
+};
+
+export default function GameTable({ tableConfig }) {
+    const { num_players, dealer_seat, hero_seat, small_blind, big_blind } = tableConfig;
+    const [sessionId, setSessionId] = useState(null);
+    const [currentStreetIndex, setCurrentStreetIndex] = useState(0);
+    const currentStreet = STREETS[currentStreetIndex];
+    
+    const [heroCardsInput, setHeroCardsInput] = useState("");
+    const [boardCardsInput, setBoardCardsInput] = useState("");
+
+    const [actionHistory, setActionHistory] = useState([]);
+    const [foldedSeats, setFoldedSeats] = useState(new Set());
+    
+    const [heroCardsHidden, setHeroCardsHidden] = useState(false);
+    
+    const [aiPrediction, setAiPrediction] = useState("Sẵn sàng phân tích Real-time.");
+    
+    // Tính toán góc độ, nhãn và vị trí tọa độ của tất cả các ghế
+    const playersConfig = useMemo(() => {
+        const labels = getPositionLabels(num_players);
+        const configs = [];
+        for (let i = 1; i <= num_players; i++) {
+            const distanceToDealer = (i - dealer_seat + num_players) % num_players;
+            // distance=1 => SB (index 0). distance=0 => BTN (index N-1)
+            const labelIndex = (distanceToDealer - 1 + num_players) % num_players;
+            const label = labels[labelIndex] || 'Unknown';
+            
+            // Xoay sao cho Hero luôn ở 90 độ (Dưới cùng tâm bàn)
+            const offsetFromHero = (i - hero_seat + num_players) % num_players;
+            const angleDeg = 90 + offsetFromHero * (360 / num_players);
+            const angleRad = angleDeg * (Math.PI / 180);
+            
+            const Rx = window.innerWidth < 800 ? 150 : 350;
+            const Ry = window.innerWidth < 800 ? 200 : 200;
+            
+            const left = `calc(50% + ${Math.cos(angleRad) * Rx}px)`;
+            const top = `calc(50% + ${Math.sin(angleRad) * Ry}px)`;
+            
+            configs.push({ seat: i, label, isHero: i === hero_seat, isDealer: i === dealer_seat, left, top });
+        }
+        return configs;
+    }, [num_players, dealer_seat, hero_seat]);
+
+    // Thuật toán lấy người tiếp theo chưa Fold
+    const getNextActiveSeat = (startSeat) => {
+        let seat = startSeat;
+        for (let count = 0; count < num_players; count++) {
+            if (!foldedSeats.has(seat)) return seat;
+            seat = (seat % num_players) + 1;
+        }
+        return -1; // Tất cả đã Fold
+    };
+
+    // Ai đi trước? Pre-flop: UTG. Post-flop: SB.
+    const getFirstSeatOfStreet = (isPreflop) => {
+        if (isPreflop) {
+            if (num_players === 2) return dealer_seat; // Heads-up Dealer/SB acts first
+            return getNextActiveSeat((dealer_seat + 2) % num_players + 1); // UTG acts first
+        }
+        return getNextActiveSeat((dealer_seat % num_players) + 1); // SB acts first
+    };
+
+    const [currentTurnSeat, setCurrentTurnSeat] = useState(() => getFirstSeatOfStreet(true));
+    
+    // States hỗ trợ chức năng sửa lại (Undo/Edit) Action
+    const [editingSeat, setEditingSeat] = useState(null);
+    const [savedTurnSeat, setSavedTurnSeat] = useState(null);
+
+    // Derived state for Pot, Current Bet, and Player Contributions
+    const { pot, currentBet, currentContributions } = useMemo(() => {
+        let currentPot = small_blind + big_blind;
+        let cBet = big_blind;
+        let cStreet = 'PRE_FLOP';
+        let contribs = {};
+        
+        const sbPlayer = playersConfig.find(p => p.label === 'SB');
+        const bbPlayer = playersConfig.find(p => p.label === 'BB');
+        if (sbPlayer) contribs[sbPlayer.label] = small_blind;
+        if (bbPlayer) contribs[bbPlayer.label] = big_blind;
+
+        actionHistory.forEach(log => {
+            if (log.street !== cStreet) {
+                cStreet = log.street;
+                cBet = 0;
+                contribs = {};
+            }
+            if (log.action === 'Call') {
+                currentPot += cBet - (contribs[log.player_id] || 0);
+                contribs[log.player_id] = cBet;
+            } else if (log.action === 'Raise') {
+                let rAmt = big_blind * 3;
+                if (log.sizing === 'Small') rAmt = big_blind * 2.5;
+                else if (log.sizing === 'Medium') rAmt = big_blind * 5;
+                else if (log.sizing === 'Big') rAmt = big_blind * 12;
+                currentPot += rAmt - (contribs[log.player_id] || 0);
+                cBet = rAmt;
+                contribs[log.player_id] = cBet;
+            }
+        });
+        
+        if (currentStreet !== cStreet) {
+            cBet = 0;
+            contribs = {};
+        }
+
+        return { pot: currentPot, currentBet: cBet, currentContributions: contribs };
+    }, [actionHistory, currentStreet, playersConfig, small_blind, big_blind]);
+    
+
+
+    useEffect(() => {
+        const initGame = async () => {
+            try {
+                const session = await startSession(tableConfig);
+                setSessionId(session.id);
+            } catch (err) {
+                console.error("Session Init Error:", err);
+            }
+        };
+        initGame();
+    }, [tableConfig]);
+
+    const handleAvatarClick = (seat) => {
+        if (seat !== currentTurnSeat) {
+            // Cho phép nhấp vào người chơi khác để sửa Action
+            setSavedTurnSeat(currentTurnSeat);
+            setCurrentTurnSeat(seat);
+            setEditingSeat(seat);
+        }
+    };
+
+    const handleAction = async (action, timing, sizing) => {
+        const actingPlayer = playersConfig.find(p => p.seat === currentTurnSeat);
+        
+        let updatedHistory = [...actionHistory];
+        const lastIdx = updatedHistory.findLastIndex(log => log.player_id === actingPlayer.label && log.street === currentStreet);
+        const isEditing = (editingSeat === currentTurnSeat);
+
+        const newFoldedSeats = new Set(foldedSeats);
+        if (action === 'Fold') {
+            newFoldedSeats.add(currentTurnSeat);
+        } else {
+            newFoldedSeats.delete(currentTurnSeat);
+        }
+        setFoldedSeats(newFoldedSeats);
+
+        const newActionLog = {
+            street: currentStreet,
+            player_id: actingPlayer.label,
+            action: action,
+            sizing: sizing || null,
+            timing_tell: timing
+        };
+
+        if (isEditing && lastIdx !== -1) {
+            updatedHistory[lastIdx] = newActionLog;
+            setEditingSeat(null);
+            setCurrentTurnSeat(savedTurnSeat);
+        } else {
+            updatedHistory.push(newActionLog);
+            
+            const nextSeatCandidate = (currentTurnSeat % num_players) + 1;
+            let nextSeat = nextSeatCandidate;
+            for (let count = 0; count < num_players; count++) {
+                if (!newFoldedSeats.has(nextSeat)) break;
+                nextSeat = (nextSeat % num_players) + 1;
+            }
+            setCurrentTurnSeat(nextSeat);
+        }
+        
+        setActionHistory(updatedHistory);
+
+        // GỌI API REAL-TIME (Trừ lúc Fold để tiết kiệm tài nguyên)
+        if (action !== 'Fold') {
+            setAiPrediction(`[${actingPlayer.label}] Đang phân tích Real-time...`);
+            try {
+                const mockSessionId = "e5b1c900-3b4e-4f6c-8a2b-1a9d4c7a5b3f";
+                await sendAction({
+                    session_id: sessionId || mockSessionId,
+                    hero_cards: heroCardsInput,
+                    community_cards: boardCardsInput,
+                    actions_log: updatedHistory
+                });
+                
+                const predictionData = await getAIPrediction(actingPlayer.label);
+                
+                if (predictionData && predictionData.history_patterns && predictionData.history_patterns.length > 0) {
+                    setAiPrediction(`[${actingPlayer.label}] Range Phân cực! (${predictionData.history_patterns.length} dữ liệu mẫu)`);
+                } else {
+                    setAiPrediction(`[${actingPlayer.label}] Dự đoán Range: Thiếu mẫu lịch sử.`);
+                }
+            } catch (e) {
+                setAiPrediction(`[${actingPlayer.label}] Lỗi API kết nối Real-time.`);
+            }
+        } else {
+            setAiPrediction(`[${actingPlayer.label}] Fold.`);
+        }
+    };
+
+    const handleNextStreet = () => {
+        if (currentStreetIndex < STREETS.length - 1) {
+            const nextIdx = currentStreetIndex + 1;
+            setCurrentStreetIndex(nextIdx);
+            setCurrentTurnSeat(getFirstSeatOfStreet(false));
+            setAiPrediction(`Đã chuyển sang ${STREETS[nextIdx].replace('_', ' ')}. Lượt của người sau Dealer.`);
+        }
+    };
+
+
+    return (
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col relative overflow-hidden select-none font-sans">
+            
+            {/* The Poker Table Oval Background */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-green-800 rounded-[200px] border-[16px] border-amber-900 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                {/* Board Cards and Pot (Center of Table) */}
+                <div className="flex flex-col items-center gap-4">
+                    <div className="bg-gray-900 bg-opacity-80 px-6 py-2 rounded-full border border-green-500 text-xl font-bold text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.2)]">
+                        Pot: ${pot}
+                    </div>
+                    {currentStreetIndex >= 1 && (
+                        <div className="flex flex-col items-center relative group">
+                            <RenderCards input={boardCardsInput} />
+                            <input type="text" value={boardCardsInput} onChange={e => setBoardCardsInput(e.target.value)} className="w-56 bg-gray-800 border border-gray-600 rounded p-2 text-white outline-none focus:border-blue-500 font-mono text-center tracking-widest shadow-xl absolute -bottom-12 opacity-20 focus:opacity-100 hover:opacity-100 transition-opacity" placeholder="Nhập: 10a 12c 2d" />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Real-time AI HUD */}
+            <div className="absolute top-4 left-1/2 transform -translate-x-1/2 px-6 py-2 rounded-full font-bold text-sm z-50 bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center gap-2 transition-all">
+                <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+                {aiPrediction}
+            </div>
+
+            {/* Control Panel (Next Street) */}
+            <div className="absolute top-4 right-4 flex flex-col gap-2 z-40 bg-gray-800 p-4 rounded-xl border border-gray-600 shadow-xl">
+                <div className="font-bold text-gray-300 text-sm">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
+                {currentStreet !== 'SHOWDOWN' && (
+                    <button onClick={handleNextStreet} className="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded font-bold shadow transition mt-2">
+                        Tiến Street Tiếp ➔
+                    </button>
+                )}
+            </div>
+            
+            {/* Input Hero Hole Cards (Góc phải dưới) */}
+            <div className="absolute bottom-4 right-4 bg-gray-800 p-4 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] z-40 w-48 transition-all">
+                <label className="block text-xs font-bold text-blue-400 mb-2 text-center">Bài tẩy (Hero)</label>
+                {!heroCardsHidden ? (
+                    <div className="flex flex-col gap-2 relative">
+                        <RenderCards input={heroCardsInput} />
+                        <input type="text" value={heroCardsInput} onChange={e => setHeroCardsInput(e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded p-2 text-white outline-none font-mono text-center shadow-inner" placeholder="VD: 1a 13b" />
+                        <button onClick={() => setHeroCardsHidden(true)} disabled={heroCardsInput.length < 5} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-1.5 px-2 rounded text-sm transition">Khóa & Ẩn</button>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-2 items-center">
+                        <div className="text-gray-400 font-mono tracking-widest bg-gray-900 px-4 py-2 rounded-lg border border-gray-700 w-full text-center">[ Đã ẩn ]</div>
+                        <button onClick={() => setHeroCardsHidden(false)} className="text-xs text-blue-400 hover:text-blue-300 underline">Chỉnh sửa</button>
+                    </div>
+                )}
+                
+                {/* Mock Win Probability display */}
+                {heroCardsHidden && heroCardsInput.length >= 4 && (
+                    <div className="mt-4 text-center border-t border-gray-700 pt-3">
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wider">Tỉ lệ thắng (Equity)</div>
+                        <div className="text-2xl font-bold text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
+                            {Math.max(15, Math.min(85, (heroCardsInput.charCodeAt(0) * 17) % 100))}%
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Dynamic Rendering of N Players in Circular Pattern */}
+            {playersConfig.map(p => {
+                const myContrib = currentContributions[p.label] || 0;
+                const canCheck = myContrib === currentBet;
+
+                return (
+                    <div key={p.seat} style={{ left: p.left, top: p.top }} className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20">
+                        <PlayerAvatar 
+                            seat={p.seat} 
+                            label={p.label} 
+                            isHero={p.isHero} 
+                            isActive={currentTurnSeat === p.seat} 
+                            hasFolded={foldedSeats.has(p.seat)}
+                            canCheck={canCheck}
+                            disableAll={!heroCardsHidden}
+                            onAction={handleAction} 
+                            onAvatarClick={handleAvatarClick}
+                        />
+                        
+                        {/* Biểu tượng Dealer (D) gắn kèm */}
+                        {p.isDealer && (
+                            <div className="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white text-black text-xs font-bold flex items-center justify-center rounded-full shadow-lg border-2 border-gray-400 z-30">
+                                D
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+            
+            {/* Overlay chặn màn hình nếu Hero chưa khóa bài */}
+            {!heroCardsHidden && (
+                <div className="absolute inset-0 bg-black bg-opacity-40 z-30 flex items-center justify-center pointer-events-none">
+                    <div className="bg-gray-800 px-6 py-3 rounded-xl border border-blue-500 shadow-2xl animate-bounce">
+                        <span className="text-blue-400 font-bold">Hãy nhập và khóa Bài tẩy trước khi ván bài bắt đầu!</span>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

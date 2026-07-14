@@ -1,0 +1,15 @@
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+# URL kết nối DB tạm thời, trong thực tế sẽ lấy từ biến môi trường (.env)
+SQLALCHEMY_DATABASE_URL = "postgresql://user:password@localhost/poker_ai"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

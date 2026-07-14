@@ -1,0 +1,25 @@
+{
+  "name": "poker-ai-assistant-frontend",
+  "version": "1.0.0",
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "@tailwindcss/vite": "^4.3.2",
+    "framer-motion": "^10.16.4",
+    "pokersolver": "^2.1.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-use-gesture": "^9.1.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.3",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.19",
+    "tailwindcss": "^4.3.2",
+    "vite": "^8.1.4"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}

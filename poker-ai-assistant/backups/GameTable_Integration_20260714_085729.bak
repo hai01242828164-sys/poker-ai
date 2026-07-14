@@ -1,0 +1,56 @@
+import React, { useState } from 'react';
+import PlayerAvatar from './PlayerAvatar';
+import SizingSlider from './SizingSlider';
+
+export default function GameTable() {
+    const [showSlider, setShowSlider] = useState(false);
+    
+    // Callback xử lý khi người dùng kết thúc thao tác vuốt từ PlayerAvatar
+    const handleSwipeAction = (action) => {
+        if (action === 'Raise') {
+            setShowSlider(true);
+        } else {
+            setShowSlider(false);
+            console.log("Action confirmed:", action);
+        }
+    };
+
+    // Callback xử lý khi người dùng chọn xong size (nếu có Raise)
+    const handleSizing = (size) => {
+        console.log("Raise amount confirmed:", size);
+        setShowSlider(false);
+    };
+
+    return (
+        // Giao diện Dark Mode tĩnh, khóa cuộn và zoom (touch-none)
+        <div className="min-h-screen bg-gray-900 text-white flex flex-col relative overflow-hidden select-none touch-none">
+            
+            {/* Đối thủ & Vuốt chọn Action */}
+            <div className="absolute top-20 left-1/2 transform -translate-x-1/2">
+                <PlayerAvatar onSwipeAction={handleSwipeAction} />
+            </div>
+
+            {/* Khu vực Bài Chung (Community Cards) - Cố định ở trung tâm */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex gap-2">
+                <div className="w-16 h-24 bg-gray-700 rounded-md border border-gray-600 flex items-center justify-center text-2xl font-bold">Th</div>
+                <div className="w-16 h-24 bg-gray-700 rounded-md border border-gray-600 flex items-center justify-center text-2xl font-bold">9c</div>
+                <div className="w-16 h-24 bg-gray-700 rounded-md border border-gray-600 flex items-center justify-center text-2xl font-bold">2s</div>
+                <div className="w-16 h-24 bg-gray-800 rounded-md border border-gray-700 border-dashed opacity-50 flex items-center justify-center">?</div>
+                <div className="w-16 h-24 bg-gray-800 rounded-md border border-gray-700 border-dashed opacity-50 flex items-center justify-center">?</div>
+            </div>
+
+            {/* Khu vực Bài Hero - Đặt ở đáy màn hình (Bottom Center) */}
+            <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex gap-2">
+                <div className="w-20 h-32 bg-gray-800 rounded-lg border-2 border-blue-500 shadow-2xl flex items-center justify-center text-3xl font-bold text-red-500">A♥</div>
+                <div className="w-20 h-32 bg-gray-800 rounded-lg border-2 border-blue-500 shadow-2xl flex items-center justify-center text-3xl font-bold text-gray-200">K♠</div>
+            </div>
+
+            {/* Thanh trượt Sizing (Chỉ hiện khi Raise) */}
+            {showSlider && (
+                <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 w-80">
+                    <SizingSlider onSelectSize={handleSizing} />
+                </div>
+            )}
+        </div>
+    );
+}
