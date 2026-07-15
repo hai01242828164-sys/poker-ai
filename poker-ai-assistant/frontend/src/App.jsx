@@ -146,7 +146,7 @@ export default function App() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col font-sans">
+        <div className="h-[100dvh] w-screen overflow-hidden bg-gray-900 flex flex-col font-sans">
             {/* Yêu cầu xoay ngang trên Mobile Portrait */}
             <div className="hidden portrait:flex fixed inset-0 bg-gray-900 z-[9999] flex-col items-center justify-center p-6 text-center md:portrait:hidden">
                 <div className="text-6xl mb-6 animate-pulse">🔄</div>
