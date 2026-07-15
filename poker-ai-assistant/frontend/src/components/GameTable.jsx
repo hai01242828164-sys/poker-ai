@@ -651,6 +651,12 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                                 </div>
                             )}
                             
+                            {!heroCardsHidden && (
+                                <div className="text-blue-400 text-[10px] font-bold text-center animate-pulse leading-tight mt-1">
+                                    Hãy nhập và Khóa bài<br/>để bắt đầu!
+                                </div>
+                            )}
+                            
                             <button onClick={() => setHeroCardsHidden(true)} disabled={heroCardsInput.length < 5 || !isValidCards} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-2 px-2 rounded text-sm transition">Khóa & Ẩn</button>
                         </div>
                     ) : (
@@ -706,25 +712,6 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     activePlayersCount={activePlayersCount}
                 />
             )}
-
-            {/* Board Cards and Pot (Center of Table) */}
-            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 ${!isBoardValid ? 'z-50' : 'z-10'}`}>
-                <div className="bg-gray-900 bg-opacity-80 px-6 py-2 rounded-full border border-green-500 text-xl font-bold text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.2)] pointer-events-none">
-                    Pot: ${pot}
-                </div>
-                {currentStreetIndex >= 1 && (
-                    <div className="flex flex-col items-center relative group">
-                        <RenderCards input={boardCardsInput} />
-                        <input type="text" value={boardCardsInput} onChange={e => setBoardCardsInput(e.target.value)} className={`w-56 bg-gray-800 border rounded p-2 text-white outline-none font-mono text-center tracking-widest shadow-xl absolute -bottom-12 transition-all ${!isBoardValid ? 'border-blue-500 opacity-100 ring-2 ring-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.6)] animate-pulse' : 'border-gray-600 opacity-20 focus:opacity-100 hover:opacity-100 focus:border-blue-500 pointer-events-auto'}`} placeholder="Nhập: 10c 12r 2b" />
-                    </div>
-                )}
-                
-                {!isValidCards && (
-                    <div className="absolute -bottom-20 text-red-500 font-bold bg-red-900 bg-opacity-80 px-4 py-1 rounded shadow-lg animate-pulse w-max z-50">
-                        Lỗi: Trùng lá bài hoặc Sai định dạng (VD: 1c, 13b)!
-                    </div>
-                )}
-            </div>
 
             {/* Dynamic Rendering of N Players in Circular Pattern */}
             {playersConfig.map(p => {
@@ -794,29 +781,36 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
             })}
             
             </div>
+            
+            {/* Board Cards and Pot (Center of Table - Outside Scale) */}
+            <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-4 ${!isBoardValid ? 'z-[60]' : 'z-30'} pointer-events-none`}>
+                <div className="bg-gray-900 bg-opacity-80 px-6 py-2 rounded-full border border-green-500 text-xl font-bold text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.2)]">
+                    Pot: ${pot}
+                </div>
+                {currentStreetIndex >= 1 && (
+                    <div className="flex flex-col items-center relative group pointer-events-auto">
+                        <RenderCards input={boardCardsInput} />
+                        <input type="text" value={boardCardsInput} onChange={e => setBoardCardsInput(e.target.value)} className={`w-64 bg-gray-800 border rounded p-3 text-white outline-none font-mono text-center tracking-widest shadow-xl absolute -bottom-16 text-lg transition-all ${!isBoardValid ? 'border-blue-500 opacity-100 ring-4 ring-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.8)] animate-pulse' : 'border-gray-600 opacity-90 focus:opacity-100 hover:opacity-100 focus:border-blue-500'}`} placeholder="Nhập: 10c 12r 2b" />
+                        
+                        {heroCardsHidden && !isBoardValid && activePlayersCount > 1 && (
+                            <div className="absolute -bottom-28 bg-blue-900 bg-opacity-90 px-4 py-2 rounded-lg border border-blue-400 shadow-xl w-max animate-bounce">
+                                <span className="text-blue-200 font-bold text-sm">
+                                    {currentStreetIndex === 1 && "Nhập 3 lá Flop để tiếp tục!"}
+                                    {currentStreetIndex === 2 && "Nhập thêm 1 lá Turn để tiếp tục!"}
+                                    {currentStreetIndex >= 3 && "Nhập thêm 1 lá River để tiếp tục!"}
+                                </span>
+                            </div>
+                        )}
+                        {!isValidCards && (
+                            <div className="absolute -bottom-28 text-red-100 font-bold bg-red-600 px-4 py-2 rounded-lg shadow-xl animate-pulse w-max">
+                                Sai định dạng bài! (VD: 1c, 13b)
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             
-            {/* Overlay chặn màn hình nếu Hero chưa khóa bài */}
-            {!heroCardsHidden && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 z-30 flex items-center justify-center pointer-events-none">
-                    <div className="bg-gray-800 px-6 py-3 rounded-xl border border-blue-500 shadow-2xl animate-bounce">
-                        <span className="text-blue-400 font-bold">Hãy nhập và khóa Bài tẩy trước khi ván bài bắt đầu!</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Overlay chặn màn hình nếu chưa nhập đủ bài trên bàn */}
-            {heroCardsHidden && !isBoardValid && activePlayersCount > 1 && (
-                <div className="absolute inset-0 bg-black bg-opacity-40 z-30 flex items-center justify-center pointer-events-none">
-                    <div className="bg-gray-800 px-6 py-3 rounded-xl border border-blue-500 shadow-2xl animate-bounce mt-48">
-                        <span className="text-blue-400 font-bold">
-                            {currentStreetIndex === 1 && "Vui lòng nhập đủ 3 lá bài chung (Flop) trước khi tiếp tục!"}
-                            {currentStreetIndex === 2 && "Vui lòng nhập thêm 1 lá bài chung (tổng 4 lá Turn) trước khi tiếp tục!"}
-                            {currentStreetIndex >= 3 && "Vui lòng nhập thêm 1 lá bài chung (tổng 5 lá River) trước khi tiếp tục!"}
-                        </span>
-                    </div>
-                </div>
-            )}
+            </div>
             
             {/* Overlay thông báo Kết thúc vòng cược */}
             {isStreetComplete && currentStreet !== 'SHOWDOWN' && activePlayersCount > 1 && (
