@@ -608,18 +608,33 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
         <div ref={tableContainerRef} className="flex-1 w-full h-full bg-gray-900 text-white flex flex-col relative overflow-hidden select-none font-sans">
             
             {/* Real-time AI HUD (Center Top) */}
-            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-                <div className="px-4 py-1.5 rounded-full font-bold text-[11px] sm:text-sm bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)] flex items-center gap-2 w-max text-center">
+            <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none w-max max-w-[80vw]">
+                <div className="px-3 py-1 rounded-full font-bold text-[9px] sm:text-[10px] bg-blue-600/90 shadow-[0_0_10px_rgba(37,99,235,0.5)] flex items-center gap-1.5 w-full text-center">
                     <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
-                    <span className="truncate">{aiPrediction}</span>
+                    <span className="truncate whitespace-nowrap">{aiPrediction}</span>
                 </div>
             </div>
 
             {/* Control Panels Container - Floating in Corners */}
             <div className="absolute inset-0 z-40 pointer-events-none">
                 
+                {/* AI Advisor Panel - Top Left */}
+                {currentTurnSeat === hero_seat && !isStreetComplete && heroCardsHidden && (
+                    <AIAdvisor 
+                        equity={equity}
+                        pot={pot}
+                        currentBet={currentBet}
+                        heroContrib={currentContributions[playersConfig.find(p => p.isHero)?.id] || 0}
+                        actionHistory={actionHistory}
+                        currentStreet={currentStreet}
+                        playersConfig={playersConfig}
+                        globalProfiles={globalProfiles}
+                        activePlayersCount={activePlayersCount}
+                    />
+                )}
+                
                 {/* Control Panel (Next Street) - Top Right */}
-                <div className="absolute top-2 right-2 flex flex-col gap-1.5 bg-gray-800/90 p-3 rounded-xl border border-gray-600 shadow-xl pointer-events-auto backdrop-blur-sm max-w-[200px]">
+                <div className="absolute top-2 right-2 flex flex-col gap-1.5 bg-gray-800/90 p-2 sm:p-3 rounded-xl border border-gray-600 shadow-xl pointer-events-auto backdrop-blur-sm max-w-[150px] sm:max-w-[200px]">
                     <div className="font-bold text-gray-300 text-[10px] sm:text-sm">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
                     {activePlayersCount === 1 || currentStreet === 'SHOWDOWN' ? (
                         <button onClick={handleCompleteHand} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded font-bold shadow-[0_0_15px_rgba(34,197,94,0.5)] transition mt-1 animate-pulse text-xs sm:text-sm">
@@ -638,9 +653,9 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     )}
                 </div>
 
-                {/* Input Hero Hole Cards - Bottom Left */}
-                <div className="absolute bottom-2 left-2 bg-gray-800/95 p-3 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] w-40 sm:w-48 transition-all pointer-events-auto backdrop-blur-sm">
-                    <label className="block text-[10px] sm:text-xs font-bold text-blue-400 mb-2 text-center">Bài tẩy (Hero)</label>
+                {/* Input Hero Hole Cards - Bottom Right */}
+                <div className="absolute bottom-2 right-2 bg-gray-800/95 p-2 sm:p-3 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] w-40 sm:w-48 transition-all pointer-events-auto backdrop-blur-sm">
+                    <label className="block text-[9px] sm:text-xs font-bold text-blue-400 mb-1 sm:mb-2 text-center">Bài tẩy (Hero)</label>
                     {!heroCardsHidden ? (
                         <div className="flex flex-col gap-2 relative">
                             <RenderCards input={heroCardsInput} />
@@ -678,8 +693,8 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     )}
                 </div>
                 
-                {/* Action Panel - Bottom Right */}
-                <div className="absolute bottom-2 right-2 w-64 pointer-events-auto">
+                {/* Action Panel - Bottom Left */}
+                <div className="absolute bottom-2 left-2 w-56 sm:w-64 pointer-events-auto">
                     <ActionPanel 
                         isActive={!isActionDisabled} 
                         isPostFlop={currentStreetIndex >= 1} 
@@ -698,21 +713,6 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     {/* The Poker Table Oval Background */}
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-green-800 rounded-[200px] border-[16px] border-amber-900 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)]">
                     </div>
-
-            {/* AI Advisor Panel */}
-            {currentTurnSeat === hero_seat && !isStreetComplete && heroCardsHidden && (
-                <AIAdvisor 
-                    equity={equity}
-                    pot={pot}
-                    currentBet={currentBet}
-                    heroContrib={currentContributions[playersConfig.find(p => p.isHero)?.id] || 0}
-                    actionHistory={actionHistory}
-                    currentStreet={currentStreet}
-                    playersConfig={playersConfig}
-                    globalProfiles={globalProfiles}
-                    activePlayersCount={activePlayersCount}
-                />
-            )}
 
             {/* Dynamic Rendering of N Players in Circular Pattern */}
             {playersConfig.map(p => {
