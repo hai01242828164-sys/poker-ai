@@ -116,18 +116,22 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
     const [tableScale, setTableScale] = useState(1);
 
     useEffect(() => {
-        const calculateScale = () => {
+        const updateScale = () => {
             if (tableContainerRef.current) {
                 const containerWidth = tableContainerRef.current.clientWidth;
-                // Bàn gốc cần khoảng 800px width để hiển thị đẹp cả ghế 2 bên
-                const targetWidth = 800; 
-                const newScale = Math.min(1, containerWidth / targetWidth);
-                setTableScale(newScale);
+                const containerHeight = tableContainerRef.current.clientHeight;
+                // Bàn gốc là 800x600. Thêm margin an toàn.
+                const scaleX = containerWidth / 850;
+                const scaleY = containerHeight / 650;
+                setTableScale(Math.max(0.3, Math.min(scaleX, scaleY, 1))); // Tối thiểu 0.3, tối đa 1
             }
         };
-        calculateScale();
-        window.addEventListener('resize', calculateScale);
-        return () => window.removeEventListener('resize', calculateScale);
+        
+        updateScale();
+        // Delay slight resize to handle mobile orientation changes smoothly
+        setTimeout(updateScale, 100);
+        window.addEventListener('resize', updateScale);
+        return () => window.removeEventListener('resize', updateScale);
     }, []);
 
     // Tính toán góc độ, nhãn và vị trí tọa độ của tất cả các ghế
@@ -604,18 +608,18 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
         <div ref={tableContainerRef} className="flex-1 bg-gray-900 text-white flex flex-col relative overflow-x-hidden select-none font-sans">
             
             {/* Real-time AI HUD (Center Top) */}
-            <div className="w-full p-2 flex justify-center z-50 bg-gray-900 md:bg-transparent md:absolute md:top-4 md:left-1/2 md:transform md:-translate-x-1/2 transition-all pointer-events-none">
+            <div className="w-full p-2 flex justify-center z-50 bg-transparent absolute top-4 left-1/2 transform -translate-x-1/2 transition-all pointer-events-none">
                 <div className="px-6 py-2 rounded-full font-bold text-sm bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center gap-2 w-max max-w-full text-center">
                     <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
                     <span className="truncate">{aiPrediction}</span>
                 </div>
             </div>
 
-            {/* Control Panels Container - Mobile: Stacked Flex at Bottom / Desktop: Float */}
-            <div className="flex flex-col md:block order-last md:order-none z-40 bg-gray-900 border-t border-gray-800 md:border-none p-4 md:p-0 w-full mt-auto">
+            {/* Control Panels Container - Always Floating */}
+            <div className="block z-40">
                 
                 {/* Control Panel (Next Street) */}
-                <div className="md:absolute md:top-4 md:right-4 flex flex-col gap-2 z-40 bg-gray-800 p-4 rounded-xl border border-gray-600 shadow-xl mb-4 md:mb-0">
+                <div className="absolute top-4 right-4 flex flex-col gap-2 z-40 bg-gray-800 p-4 rounded-xl border border-gray-600 shadow-xl mb-0">
                     <div className="font-bold text-gray-300 text-sm">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
                     {activePlayersCount === 1 || currentStreet === 'SHOWDOWN' ? (
                         <button onClick={handleCompleteHand} className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded font-bold shadow-[0_0_15px_rgba(34,197,94,0.5)] transition mt-2 animate-pulse text-sm">
@@ -637,8 +641,8 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     </button>
                 </div>
 
-                {/* Input Hero Hole Cards (Góc phải dưới trên PC) */}
-                <div className="md:absolute md:bottom-4 md:right-4 bg-gray-800 p-4 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] z-40 w-full md:w-48 transition-all">
+                {/* Input Hero Hole Cards (Góc phải dưới) */}
+                <div className="absolute bottom-4 right-4 bg-gray-800 p-4 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] z-40 w-48 transition-all">
                     <label className="block text-xs font-bold text-blue-400 mb-2 text-center">Bài tẩy (Hero)</label>
                     {!heroCardsHidden ? (
                         <div className="flex flex-col gap-2 relative">
@@ -678,7 +682,7 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 </div>
                 
                 {/* Action Panel (Nơi nhập Fold/Call/Raise) */}
-                <div className="w-full mt-4 md:mt-0 md:fixed md:bottom-4 md:left-1/2 md:transform md:-translate-x-1/2 md:w-auto z-50">
+                <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-auto z-50">
                     <ActionPanel 
                         isActive={!isActionDisabled} 
                         isPostFlop={currentStreetIndex >= 1} 
