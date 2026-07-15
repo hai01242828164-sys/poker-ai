@@ -124,10 +124,10 @@ export default function NextHandSetup({ config, onComplete }) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4 font-sans relative overflow-hidden">
+        <div className="h-full w-full overflow-y-auto bg-gray-900 text-white flex flex-col items-center p-4 font-sans relative">
             <div className="hidden sm:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-green-900 rounded-[150px] border-[10px] border-amber-900 opacity-20 pointer-events-none"></div>
             
-            <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg border border-gray-700 z-10 relative">
+            <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg border border-gray-700 z-10 relative my-auto shrink-0 mt-8 mb-8">
                 <div className="absolute -top-4 -right-4 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">Setup Ván mới</div>
                 
                 <h1 className="text-2xl font-bold mb-6 text-center text-blue-400">Điều chỉnh Bàn Chơi</h1>
