@@ -605,45 +605,42 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
     const isActionDisabled = currentStreetIndex === 4 || !heroCardsHidden || isStreetComplete || !isValidCards || !isBoardValid;
 
     return (
-        <div ref={tableContainerRef} className="flex-1 bg-gray-900 text-white flex flex-col relative overflow-x-hidden select-none font-sans">
+        <div ref={tableContainerRef} className="flex-1 w-full h-full bg-gray-900 text-white flex flex-col relative overflow-hidden select-none font-sans">
             
             {/* Real-time AI HUD (Center Top) */}
-            <div className="w-full p-2 flex justify-center z-50 bg-transparent absolute top-4 left-1/2 transform -translate-x-1/2 transition-all pointer-events-none">
-                <div className="px-6 py-2 rounded-full font-bold text-sm bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)] flex items-center gap-2 w-max max-w-full text-center">
-                    <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                <div className="px-4 py-1.5 rounded-full font-bold text-[11px] sm:text-sm bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.5)] flex items-center gap-2 w-max text-center">
+                    <div className="w-1.5 h-1.5 bg-red-400 rounded-full animate-pulse flex-shrink-0"></div>
                     <span className="truncate">{aiPrediction}</span>
                 </div>
             </div>
 
-            {/* Control Panels Container - Always Floating */}
-            <div className="block z-40">
+            {/* Control Panels Container - Floating in Corners */}
+            <div className="absolute inset-0 z-40 pointer-events-none">
                 
-                {/* Control Panel (Next Street) */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2 z-40 bg-gray-800 p-4 rounded-xl border border-gray-600 shadow-xl mb-0">
-                    <div className="font-bold text-gray-300 text-sm">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
+                {/* Control Panel (Next Street) - Top Right */}
+                <div className="absolute top-2 right-2 flex flex-col gap-1.5 bg-gray-800/90 p-3 rounded-xl border border-gray-600 shadow-xl pointer-events-auto backdrop-blur-sm max-w-[200px]">
+                    <div className="font-bold text-gray-300 text-[10px] sm:text-sm">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
                     {activePlayersCount === 1 || currentStreet === 'SHOWDOWN' ? (
-                        <button onClick={handleCompleteHand} className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded font-bold shadow-[0_0_15px_rgba(34,197,94,0.5)] transition mt-2 animate-pulse text-sm">
-                            Hoàn tất Ván & Lưu
+                        <button onClick={handleCompleteHand} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded font-bold shadow-[0_0_15px_rgba(34,197,94,0.5)] transition mt-1 animate-pulse text-xs sm:text-sm">
+                            Hoàn tất Ván
                         </button>
                     ) : (
-                        <button onClick={handleNextStreet} className="bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded font-bold shadow transition mt-2">
+                        <button onClick={handleNextStreet} className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded font-bold shadow transition mt-1 text-xs sm:text-sm">
                             Tiến Street Tiếp ➔
                         </button>
                     )}
                     
                     {currentStreetIndex > 0 && (
-                        <button onClick={handlePrevStreet} className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-1.5 rounded text-xs transition mt-1 border border-gray-500">
-                            ⟵ Quay lại Vòng trước
+                        <button onClick={handlePrevStreet} className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-[10px] transition mt-1 border border-gray-500">
+                            ⟵ Quay lại
                         </button>
                     )}
-                    <button onClick={() => setShowTagInfo(true)} className="text-gray-400 text-[11px] hover:text-white underline text-center mt-2">
-                        ? Xem bảng chú giải Tag
-                    </button>
                 </div>
 
-                {/* Input Hero Hole Cards (Góc phải dưới) */}
-                <div className="absolute bottom-4 right-4 bg-gray-800 p-4 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] z-40 w-48 transition-all">
-                    <label className="block text-xs font-bold text-blue-400 mb-2 text-center">Bài tẩy (Hero)</label>
+                {/* Input Hero Hole Cards - Bottom Left */}
+                <div className="absolute bottom-2 left-2 bg-gray-800/95 p-3 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] w-40 sm:w-48 transition-all pointer-events-auto backdrop-blur-sm">
+                    <label className="block text-[10px] sm:text-xs font-bold text-blue-400 mb-2 text-center">Bài tẩy (Hero)</label>
                     {!heroCardsHidden ? (
                         <div className="flex flex-col gap-2 relative">
                             <RenderCards input={heroCardsInput} />
@@ -681,8 +678,8 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     )}
                 </div>
                 
-                {/* Action Panel (Nơi nhập Fold/Call/Raise) */}
-                <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 w-auto z-50">
+                {/* Action Panel - Bottom Right */}
+                <div className="absolute bottom-2 right-2 w-64 pointer-events-auto">
                     <ActionPanel 
                         isActive={!isActionDisabled} 
                         isPostFlop={currentStreetIndex >= 1} 
@@ -695,8 +692,8 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
             </div>
 
             {/* Scaled Poker Table Area */}
-            <div className="flex-1 relative flex items-center justify-center min-h-[400px] w-full overflow-hidden">
-                <div style={{ transform: `scale(${tableScale})`, width: '800px', height: '600px' }} className="relative origin-center">
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+                <div style={{ transform: `scale(${tableScale})`, width: '800px', height: '600px' }} className="relative origin-center pointer-events-auto">
                     
                     {/* The Poker Table Oval Background */}
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-green-800 rounded-[200px] border-[16px] border-amber-900 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)]">
@@ -813,7 +810,6 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     </div>
                 )}
             </div>
-            
             </div>
             
             {/* Overlay thông báo Kết thúc vòng cược */}
