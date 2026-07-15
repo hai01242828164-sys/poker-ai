@@ -94,23 +94,45 @@ const RenderCards = ({ input }) => {
 
 export default function GameTable({ tableConfig, globalProfiles, onHandComplete }) {
     const { num_players, dealer_seat, hero_seat, small_blind, big_blind } = tableConfig;
+    const initData = JSON.parse(localStorage.getItem('poker_mid_hand_save')) || {};
+
     const [sessionId, setSessionId] = useState(null);
-    const [currentStreetIndex, setCurrentStreetIndex] = useState(0);
+    const [currentStreetIndex, setCurrentStreetIndex] = useState(initData.currentStreetIndex || 0);
     const currentStreet = STREETS[currentStreetIndex];
     
-    const [heroCardsInput, setHeroCardsInput] = useState("");
-    const [boardCardsInput, setBoardCardsInput] = useState("");
-    const [villainCards, setVillainCards] = useState({});
+    const [heroCardsInput, setHeroCardsInput] = useState(initData.heroCardsInput || "");
+    const [boardCardsInput, setBoardCardsInput] = useState(initData.boardCardsInput || "");
+    const [villainCards, setVillainCards] = useState(initData.villainCards || {});
 
-    const [actionHistory, setActionHistory] = useState([]);
-    const [foldedSeats, setFoldedSeats] = useState(new Set());
+    const [actionHistory, setActionHistory] = useState(initData.actionHistory || []);
+    const [foldedSeats, setFoldedSeats] = useState(initData.foldedSeats ? new Set(initData.foldedSeats) : new Set());
     
-    const [heroCardsHidden, setHeroCardsHidden] = useState(false);
+    const [heroCardsHidden, setHeroCardsHidden] = useState(initData.heroCardsHidden || false);
+    const [boardCardsHidden, setBoardCardsHidden] = useState(initData.boardCardsHidden || false);
     
     const [aiPrediction, setAiPrediction] = useState("Sẵn sàng phân tích Real-time.");
     const [showTagInfo, setShowTagInfo] = useState(false);
     const [showWinnerModal, setShowWinnerModal] = useState(false);
     const [winnerIds, setWinnerIds] = useState(new Set());
+    
+    useEffect(() => {
+        // Chỉ nạp state cũ 1 lần duy nhất, sau đó xoá để ép người dùng phải lưu lại nếu muốn
+        localStorage.removeItem('poker_mid_hand_save');
+    }, []);
+
+    useEffect(() => {
+        const handleSave = () => {
+            const state = {
+                currentStreetIndex, heroCardsInput, boardCardsInput, villainCards, 
+                actionHistory, foldedSeats: Array.from(foldedSeats), 
+                heroCardsHidden, boardCardsHidden
+            };
+            localStorage.setItem('poker_mid_hand_save', JSON.stringify(state));
+            alert('Đã lưu trạng thái ván đấu hiện tại! Nếu thoát, lần tới sẽ tự động khôi phục.');
+        };
+        window.addEventListener('SAVE_MID_HAND', handleSave);
+        return () => window.removeEventListener('SAVE_MID_HAND', handleSave);
+    }, [currentStreetIndex, heroCardsInput, boardCardsInput, villainCards, actionHistory, foldedSeats, heroCardsHidden, boardCardsHidden]);
     
     const tableContainerRef = useRef(null);
     const [tableScale, setTableScale] = useState(1);
@@ -747,8 +769,9 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                         />
 
                         {/* Tag Badge */}
-                        <div className={`absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-[9px] px-1.5 py-0.5 rounded font-bold shadow-lg whitespace-nowrap z-30 ${tag.color}`}>
-                            {tag.text} {profile && profile.hands > 0 ? `(${profile.hands})` : ''}
+                        <div onClick={() => setShowTagInfo(true)} className={`absolute -bottom-5 left-1/2 transform -translate-x-1/2 text-[9px] px-1.5 py-0.5 rounded font-bold shadow-lg whitespace-nowrap z-30 cursor-pointer hover:scale-110 transition-transform flex items-center gap-1 ${tag.color}`}>
+                            <span>{tag.text} {profile && profile.hands > 0 ? `(${profile.hands})` : ''}</span>
+                            <span className="text-[7px] bg-black/30 rounded-full w-3 h-3 flex items-center justify-center">?</span>
                         </div>
                         
                         {/* Biểu tượng Dealer (D) gắn kèm */}
