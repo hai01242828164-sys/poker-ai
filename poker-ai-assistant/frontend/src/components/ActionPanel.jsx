@@ -18,8 +18,13 @@ export default function ActionPanel({ isActive, isPostFlop, canCheck, onAction, 
     };
 
     return (
-        <div className={`bg-gray-900/90 p-2 rounded-xl border border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)] w-full max-w-[220px] mx-auto backdrop-blur-sm transition-opacity ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}>
+        <div className={`bg-gray-900/90 p-2 rounded-xl border border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)] w-full max-w-[220px] ml-0 backdrop-blur-sm transition-opacity ${isProcessing ? 'opacity-70 pointer-events-none' : ''}`}>
             
+            <div className="text-center mb-1.5 border-b border-red-500/30 pb-1">
+                <span className="text-[9px] text-red-400 font-bold uppercase tracking-widest block leading-tight">Đến lượt hành động</span>
+                <div className="text-sm font-bold text-white leading-tight">{isHero ? 'Hero' : playerName}</div>
+            </div>
+
             {/* Timing Tell Selection (Siêu nhỏ) */}
             {isPostFlop && (
                 <div className="flex gap-1 mb-2">
@@ -44,9 +49,9 @@ export default function ActionPanel({ isActive, isPostFlop, canCheck, onAction, 
             ) : (
                 <div className="flex flex-col gap-1.5">
                     <div className="flex gap-1.5">
-                        <button onClick={() => handleActionClick("Raise", "Small")} className="flex-1 py-1.5 bg-red-800 active:scale-95 rounded text-white text-[9px] font-bold border border-red-500">Nhỏ</button>
+                        <button onClick={() => handleActionClick("Raise", "Small")} className="flex-1 py-1.5 bg-red-800 active:scale-95 rounded text-white text-[9px] font-bold border border-red-500">Nhỏ (≤3bb)</button>
                         <button onClick={() => handleActionClick("Raise", "Medium")} className="flex-1 py-1.5 bg-red-700 active:scale-95 rounded text-white text-[9px] font-bold border border-red-400">Vừa</button>
-                        <button onClick={() => handleActionClick("Raise", "Big")} className="flex-1 py-1.5 bg-red-600 active:scale-95 rounded text-white text-[9px] font-bold border border-red-300">Lớn</button>
+                        <button onClick={() => handleActionClick("Raise", "Big")} className="flex-1 py-1.5 bg-red-600 active:scale-95 rounded text-white text-[9px] font-bold border border-red-300">Lớn (≥10bb)</button>
                     </div>
                     <button onClick={() => setShowRaiseMenu(false)} className="w-full py-1 bg-gray-600 active:scale-95 rounded text-white text-[10px] font-bold">Huỷ</button>
                 </div>

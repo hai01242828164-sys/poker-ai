@@ -143,10 +143,26 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
             // distance=1 => SB (index 0). distance=0 => BTN (index N-1)
             const labelIndex = (distanceToDealer - 1 + num_players) % num_players;
             const label = labels[labelIndex] || 'Unknown';
-            
-            // Xoay sao cho Hero luôn ở 90 độ (Dưới cùng tâm bàn)
+            // Tính toán góc độ để tạo hình móng ngựa né góc dưới-trái (Action Panel)
             const offsetFromHero = (i - hero_seat + num_players) % num_players;
-            const angleDeg = 90 + offsetFromHero * (360 / num_players);
+            
+            let angleDeg;
+            if (num_players <= 2) {
+                // Heads-up: Đối diện nhau
+                angleDeg = offsetFromHero === 0 ? 90 : 270;
+            } else if (offsetFromHero === 0) {
+                // Hero luôn ở góc dưới cùng (90 độ)
+                angleDeg = 90;
+            } else {
+                // Phân bổ các ghế còn lại vào cung từ 170 độ đến 370 độ
+                // 170 độ là góc trái (lệch xuống 1 chút). 370 độ (10 độ) là góc phải.
+                // Điều này tạo ra một khoảng trống an toàn từ 90 đến 170 (chính là góc dưới trái)
+                const startAngle = 170;
+                const endAngle = 370;
+                const step = (endAngle - startAngle) / (num_players - 2);
+                angleDeg = startAngle + (offsetFromHero - 1) * step;
+            }
+            
             const angleRad = angleDeg * (Math.PI / 180);
             
             const Rx = 350;
@@ -634,20 +650,20 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 )}
                 
                 {/* Control Panel (Next Street) - Top Right */}
-                <div className="absolute top-2 right-2 flex flex-col gap-1.5 bg-gray-800/90 p-2 sm:p-3 rounded-xl border border-gray-600 shadow-xl pointer-events-auto backdrop-blur-sm max-w-[150px] sm:max-w-[200px]">
-                    <div className="font-bold text-gray-300 text-[10px] sm:text-sm">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
+                <div className="absolute top-1 right-1 flex flex-col gap-1 bg-gray-800/90 p-1.5 sm:p-2 rounded-xl border border-gray-600 shadow-xl pointer-events-auto backdrop-blur-sm w-[130px] sm:w-[150px]">
+                    <div className="font-bold text-gray-300 text-[9px] text-center">Giai đoạn: <span className="text-purple-400">{currentStreet.replace('_', ' ')}</span></div>
                     {activePlayersCount === 1 || currentStreet === 'SHOWDOWN' ? (
-                        <button onClick={handleCompleteHand} className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded font-bold shadow-[0_0_15px_rgba(34,197,94,0.5)] transition mt-1 animate-pulse text-xs sm:text-sm">
+                        <button onClick={handleCompleteHand} className="bg-green-600 hover:bg-green-500 text-white px-2 py-1.5 rounded font-bold shadow-[0_0_15px_rgba(34,197,94,0.5)] transition mt-1 animate-pulse text-[10px]">
                             Hoàn tất Ván
                         </button>
                     ) : (
-                        <button onClick={handleNextStreet} className="bg-purple-700 hover:bg-purple-600 text-white px-3 py-1.5 rounded font-bold shadow transition mt-1 text-xs sm:text-sm">
+                        <button onClick={handleNextStreet} className="bg-purple-700 hover:bg-purple-600 text-white px-2 py-1.5 rounded font-bold shadow transition mt-1 text-[10px]">
                             Tiến Street Tiếp ➔
                         </button>
                     )}
                     
                     {currentStreetIndex > 0 && (
-                        <button onClick={handlePrevStreet} className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded text-[10px] transition mt-1 border border-gray-500">
+                        <button onClick={handlePrevStreet} className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded text-[9px] transition mt-1 border border-gray-500">
                             ⟵ Quay lại
                         </button>
                     )}
@@ -669,13 +685,13 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 </div>
                 
                 {/* Action Panel - Bottom Left */}
-                <div className="absolute bottom-2 left-2 w-56 sm:w-64 pointer-events-auto">
+                <div className="absolute bottom-1 left-1 w-48 sm:w-56 pointer-events-auto scale-90 origin-bottom-left">
                     <ActionPanel 
                         isActive={!isActionDisabled} 
                         isPostFlop={currentStreetIndex >= 1} 
                         canCheck={canActivePlayerCheck} 
                         onAction={handleAction} 
-                        playerName={activePlayer ? activePlayer.label : ''} 
+                        playerName={activePlayer ? `Ghế ${activePlayer.seat} - ${activePlayer.label}` : ''} 
                         isHero={activePlayer ? activePlayer.isHero : false}
                     />
                 </div>
@@ -700,11 +716,9 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 let isLastFolded = false;
                 
                 if (playerLogs.length > 0) {
-                    const lastTwo = playerLogs.slice(-2);
-                    lastActionText = lastTwo.map(log => log.action === 'Raise' ? `Raise ${log.sizing}` : log.action).join(' / ');
-                    if (lastTwo[lastTwo.length - 1].action === 'Fold') {
-                        isLastFolded = true;
-                    }
+                    const lastLog = playerLogs[playerLogs.length - 1];
+                    lastActionText = `${lastLog.action}${lastLog.sizing ? ' ' + lastLog.sizing : ''}`;
+                    isLastFolded = lastLog.action === 'Fold';
                 }
 
                 const profile = globalProfiles && globalProfiles[p.id];
@@ -765,8 +779,26 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 </div>
                 {currentStreetIndex >= 1 && (
                     <div className="flex flex-col items-center relative group pointer-events-auto">
-                        <RenderCards input={boardCardsInput} />
-                        <input type="text" value={boardCardsInput} onChange={e => setBoardCardsInput(e.target.value)} className={`w-64 bg-gray-800 border rounded p-3 text-white outline-none font-mono text-center tracking-widest shadow-xl absolute -bottom-16 text-lg transition-all ${!isBoardValid ? 'border-blue-500 opacity-100 ring-4 ring-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.8)] animate-pulse' : 'border-gray-600 opacity-90 focus:opacity-100 hover:opacity-100 focus:border-blue-500'}`} placeholder="Nhập: 10c 12r 2b" />
+                        <div className="cursor-pointer" onClick={() => setBoardCardsHidden(false)}>
+                            <RenderCards input={boardCardsInput} />
+                            {boardCardsHidden && isBoardValid && boardCardsInput.trim() !== '' && (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 rounded-lg transition-opacity text-[10px] font-bold text-white uppercase tracking-widest backdrop-blur-[1px]">
+                                    Chỉnh sửa
+                                </div>
+                            )}
+                        </div>
+                        
+                        {(!boardCardsHidden || !isBoardValid || boardCardsInput.trim() === '') && (
+                            <div className="flex flex-col gap-1 items-center mt-2 bg-gray-800/80 p-2 rounded-lg border border-gray-600 backdrop-blur-sm">
+                                <div className="flex gap-1 items-center">
+                                    <input type="text" value={boardCardsInput} onChange={e => setBoardCardsInput(e.target.value)} className={`w-32 bg-gray-700/80 border rounded px-2 py-1 text-white outline-none font-mono text-center shadow-inner text-sm ${!isBoardValid ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-600'}`} placeholder="Nhập: 10c 12r 2b" autoFocus />
+                                    <button onClick={() => setBoardCardsHidden(true)} disabled={!isBoardValid || boardCardsInput.trim() === ''} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-1 px-3 rounded text-xs transition">Xong</button>
+                                </div>
+                                {!isBoardValid && boardCardsInput.length > 0 && (
+                                    <span className="text-red-400 text-[9px] font-bold">Sai định dạng hoặc trùng lặp!</span>
+                                )}
+                            </div>
+                        )}
                         
                         {heroCardsHidden && !isBoardValid && activePlayersCount > 1 && (
                             <div className="absolute -bottom-28 bg-blue-900 bg-opacity-90 px-4 py-2 rounded-lg border border-blue-400 shadow-xl w-max animate-bounce">
