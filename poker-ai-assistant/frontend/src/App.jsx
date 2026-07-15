@@ -36,7 +36,7 @@ export default function App() {
     const handleEndSession = () => {
         if (!window.confirm("Bạn có chắc chắn muốn Kết thúc bàn chơi hiện tại? Toàn bộ dữ liệu bàn này sẽ được lưu vào Lịch sử.")) return;
         
-        if (config && handCount > 0) {
+        if (config && handHistories.length > 0) {
             const sessionData = {
                 timestamp: new Date().toISOString(),
                 config,
