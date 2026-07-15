@@ -107,22 +107,22 @@ export default function AIAdvisor({ equity, pot, currentBet, heroContrib, action
         return (
             <div 
                 onClick={() => setIsCollapsed(false)}
-                className="absolute top-1/4 left-4 bg-gray-900 border border-cyan-500 px-4 py-2 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.4)] z-50 cursor-pointer flex items-center gap-2 hover:bg-gray-800 transition-all pointer-events-auto"
+                className="absolute top-2 left-2 bg-gray-900 border border-cyan-500 px-3 py-1.5 rounded-full shadow-[0_0_15px_rgba(6,182,212,0.4)] z-50 cursor-pointer flex items-center gap-1.5 hover:bg-gray-800 transition-all pointer-events-auto"
             >
                 <span className="text-xl">🤖</span>
-                <span className="font-bold text-cyan-400 text-sm">AI: <span className="text-white ml-1">{advice.action}</span></span>
+                <span className="font-bold text-cyan-400 text-[10px] sm:text-sm">AI: <span className="text-white ml-1">{advice.action}</span></span>
             </div>
         );
     }
 
     return (
-        <div className="absolute top-1/4 left-4 bg-gray-900 border-2 border-cyan-500 p-4 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.5)] z-50 w-80 pointer-events-auto transition-all">
-            <div className="flex items-center justify-between mb-3 border-b border-gray-700 pb-2">
-                <div className="flex items-center gap-2">
-                    <span className="text-2xl drop-shadow-md">🧠</span>
-                    <h3 className="font-bold text-cyan-400 text-lg">Hệ thống Cố vấn</h3>
+        <div className="absolute top-2 left-2 bg-gray-900/95 border-2 border-cyan-500 p-3 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.5)] z-50 w-64 sm:w-72 pointer-events-auto transition-all backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2 border-b border-gray-700 pb-2">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xl drop-shadow-md">🧠</span>
+                    <h3 className="font-bold text-cyan-400 text-sm sm:text-base">Hệ thống Cố vấn</h3>
                 </div>
-                <button onClick={() => setIsCollapsed(true)} className="text-gray-400 hover:text-white font-bold text-2xl leading-none">&times;</button>
+                <button onClick={() => setIsCollapsed(true)} className="text-gray-400 hover:text-white font-bold text-xl leading-none">&times;</button>
             </div>
             
             <div className="text-center mb-4">
