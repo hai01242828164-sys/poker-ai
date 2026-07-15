@@ -653,40 +653,15 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     )}
                 </div>
 
-                {/* Input Hero Hole Cards - Bottom Right */}
-                <div className="absolute bottom-2 right-2 bg-gray-800/95 p-2 sm:p-3 rounded-xl border border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] w-40 sm:w-48 transition-all pointer-events-auto backdrop-blur-sm">
-                    <label className="block text-[9px] sm:text-xs font-bold text-blue-400 mb-1 sm:mb-2 text-center">Bài tẩy (Hero)</label>
-                    {!heroCardsHidden ? (
-                        <div className="flex flex-col gap-2 relative">
-                            <RenderCards input={heroCardsInput} />
-                            <input type="text" value={heroCardsInput} onChange={e => setHeroCardsInput(e.target.value)} className={`w-full bg-gray-700 border rounded p-2 text-white outline-none font-mono text-center shadow-inner text-lg ${!isValidCards ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-600'}`} placeholder="VD: 1c 13b" />
-                            
-                            {!isValidCards && (
-                                <div className="text-red-400 text-[10px] font-bold text-center animate-pulse leading-tight">
-                                    Lỗi: Trùng lá bài hoặc<br/>sai định dạng!
-                                </div>
-                            )}
-                            
-                            {!heroCardsHidden && (
-                                <div className="text-blue-400 text-[10px] font-bold text-center animate-pulse leading-tight mt-1">
-                                    Hãy nhập và Khóa bài<br/>để bắt đầu!
-                                </div>
-                            )}
-                            
-                            <button onClick={() => setHeroCardsHidden(true)} disabled={heroCardsInput.length < 5 || !isValidCards} className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-2 px-2 rounded text-sm transition">Khóa & Ẩn</button>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-2 items-center">
-                            <div className="text-gray-400 font-mono tracking-widest bg-gray-900 px-4 py-2 rounded-lg border border-gray-700 w-full text-center">[ Đã ẩn ]</div>
-                            <button onClick={() => setHeroCardsHidden(false)} className="text-xs text-blue-400 hover:text-blue-300 underline py-2">Chỉnh sửa</button>
-                        </div>
-                    )}
-                    
-                    {/* Mock Win Probability display */}
+                {/* Hero Stats Panel - Bottom Right (Rất nhỏ, không che màn hình) */}
+                <div className="absolute bottom-2 right-2 bg-gray-800/90 p-2 rounded-xl border border-blue-500/50 shadow-lg w-28 sm:w-32 pointer-events-auto backdrop-blur-sm text-center">
+                    <button onClick={() => setHeroCardsHidden(false)} className="text-[10px] sm:text-xs font-bold text-blue-400 hover:text-blue-300 underline mb-1">
+                        + Nhập Bài Tẩy
+                    </button>
                     {heroCardsHidden && heroCardsInput.length >= 4 && (
-                        <div className="mt-4 text-center border-t border-gray-700 pt-3">
-                            <div className="text-[10px] text-gray-400 uppercase tracking-wider">Tỉ lệ thắng (Equity)</div>
-                            <div className="text-2xl font-bold text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)] transition-all">
+                        <div className="mt-1 border-t border-gray-700/50 pt-1">
+                            <div className="text-[8px] sm:text-[9px] text-gray-400 uppercase tracking-wider">Tỉ lệ thắng</div>
+                            <div className="text-sm sm:text-base font-bold text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
                                 {equity}%
                             </div>
                         </div>
@@ -820,6 +795,35 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                         <button onClick={handleNextStreet} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-8 py-3 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl transition-all">
                             Chuyển sang {currentStreetIndex < STREETS.length - 1 ? STREETS[currentStreetIndex + 1].replace('_', ' ') : ''} ➔
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Nhập Bài Tẩy (Thay thế cho Panel cũ) */}
+            {!heroCardsHidden && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] p-4 pointer-events-auto backdrop-blur-sm">
+                    <div className="bg-gray-800 p-6 rounded-2xl w-full max-w-sm border-2 border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.5)] flex flex-col items-center">
+                        <h2 className="text-xl font-bold text-blue-400 mb-4">Nhập Bài Tẩy (Hero)</h2>
+                        <div className="flex flex-col gap-4 w-full relative">
+                            <div className="scale-125 origin-center my-2 flex justify-center">
+                                <RenderCards input={heroCardsInput} />
+                            </div>
+                            <input type="text" value={heroCardsInput} onChange={e => setHeroCardsInput(e.target.value)} className={`w-full bg-gray-900 border-2 rounded-xl p-4 text-white outline-none font-mono text-center shadow-inner text-2xl tracking-widest ${!isValidCards ? 'border-red-500 ring-2 ring-red-500' : 'border-gray-600 focus:border-blue-400'}`} placeholder="VD: 1c 13b" autoFocus />
+                            
+                            {!isValidCards && (
+                                <div className="text-red-400 font-bold text-center animate-pulse">
+                                    Lỗi: Trùng lá bài hoặc sai định dạng!
+                                </div>
+                            )}
+                            
+                            <div className="text-blue-300 text-sm font-bold text-center animate-pulse">
+                                Hãy nhập và Khóa bài để bắt đầu / tiếp tục chơi!
+                            </div>
+                            
+                            <button onClick={() => setHeroCardsHidden(true)} disabled={heroCardsInput.length < 5 || !isValidCards} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold py-3 px-6 rounded-xl text-lg transition-all shadow-lg mt-2 uppercase tracking-wide">
+                                Khóa & Đóng
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

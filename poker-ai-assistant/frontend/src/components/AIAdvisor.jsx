@@ -116,14 +116,15 @@ export default function AIAdvisor({ equity, pot, currentBet, heroContrib, action
     }
 
     return (
-        <div className="absolute top-2 left-2 bg-gray-900/95 border-2 border-cyan-500 p-3 rounded-xl shadow-[0_0_30px_rgba(6,182,212,0.5)] z-50 w-64 sm:w-72 pointer-events-auto transition-all backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-2 border-b border-gray-700 pb-2">
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xl drop-shadow-md">🧠</span>
-                    <h3 className="font-bold text-cyan-400 text-sm sm:text-base">Hệ thống Cố vấn</h3>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[110] p-4 pointer-events-auto backdrop-blur-sm">
+            <div className="bg-gray-900/95 border-2 border-cyan-500 p-4 sm:p-6 rounded-2xl shadow-[0_0_40px_rgba(6,182,212,0.6)] w-full max-w-sm flex flex-col">
+                <div className="flex items-center justify-between mb-4 border-b border-gray-700 pb-3">
+                    <div className="flex items-center gap-2">
+                        <span className="text-3xl drop-shadow-md">🧠</span>
+                        <h3 className="font-bold text-cyan-400 text-lg sm:text-xl">Hệ thống Cố vấn</h3>
+                    </div>
+                    <button onClick={() => setIsCollapsed(true)} className="text-gray-400 hover:text-red-400 font-bold text-3xl leading-none transition-colors">&times;</button>
                 </div>
-                <button onClick={() => setIsCollapsed(true)} className="text-gray-400 hover:text-white font-bold text-xl leading-none">&times;</button>
-            </div>
             
             <div className="text-center mb-4">
                 <div className="text-[10px] text-gray-400 mb-1 font-bold tracking-widest">GỢI Ý LƯỢT NÀY</div>
@@ -147,6 +148,7 @@ export default function AIAdvisor({ equity, pot, currentBet, heroContrib, action
                 </span>
                 <span className="text-yellow-400">Pot Odds: {advice.potOdds.toFixed(1)}%</span>
             </div>
+        </div>
         </div>
     );
 }
