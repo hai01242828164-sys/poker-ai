@@ -14,6 +14,7 @@ export default function App() {
     const [handCount, setHandCount] = useState(() => parseInt(localStorage.getItem('poker_handCount')) || 0);
     const [globalProfiles, setGlobalProfiles] = useState(() => JSON.parse(localStorage.getItem('poker_profiles')) || {});
     const [pastSessions, setPastSessions] = useState(() => JSON.parse(localStorage.getItem('poker_pastSessions')) || []);
+    const [handHistories, setHandHistories] = useState(() => JSON.parse(localStorage.getItem('poker_handHistories')) || []);
     
     const [showHistory, setShowHistory] = useState(false);
 
@@ -25,7 +26,8 @@ export default function App() {
         localStorage.setItem('poker_handCount', handCount);
         localStorage.setItem('poker_profiles', JSON.stringify(globalProfiles));
         localStorage.setItem('poker_pastSessions', JSON.stringify(pastSessions));
-    }, [isAuth, gameState, config, handCount, globalProfiles, pastSessions]);
+        localStorage.setItem('poker_handHistories', JSON.stringify(handHistories));
+    }, [isAuth, gameState, config, handCount, globalProfiles, pastSessions, handHistories]);
 
     if (!isAuth) {
         return <Login onLogin={() => setIsAuth(true)} />;
@@ -39,7 +41,8 @@ export default function App() {
                 timestamp: new Date().toISOString(),
                 config,
                 globalProfiles,
-                handCount
+                handCount,
+                hands: handHistories
             };
             
             setPastSessions(prev => {
@@ -51,6 +54,7 @@ export default function App() {
         setConfig(null);
         setGlobalProfiles({});
         setHandCount(0);
+        setHandHistories([]);
         setGameState('setup');
     };
 
@@ -134,6 +138,7 @@ export default function App() {
             });
 
             setGlobalProfiles(newProfiles);
+            setHandHistories(prev => [...prev, handData]);
         }
         
         setGameState('next_hand_setup');
@@ -169,6 +174,17 @@ export default function App() {
                     >
                         <span>📜</span> Lịch sử
                     </button>
+                    
+                    {gameState === 'playing' && (
+                        <button 
+                            onClick={() => {
+                                window.dispatchEvent(new CustomEvent('SAVE_MID_HAND'));
+                            }}
+                            className="bg-blue-900/40 hover:bg-blue-900/60 border border-blue-800/50 text-blue-300 px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm transition-all"
+                        >
+                            <span>💾</span> Lưu Ván Dở
+                        </button>
+                    )}
                     
                     {gameState !== 'setup' && (
                         <button 
