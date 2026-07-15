@@ -147,6 +147,13 @@ export default function App() {
 
     return (
         <div className="min-h-screen bg-gray-900 flex flex-col font-sans">
+            {/* Yêu cầu xoay ngang trên Mobile Portrait */}
+            <div className="hidden portrait:flex fixed inset-0 bg-gray-900 z-[9999] flex-col items-center justify-center p-6 text-center md:portrait:hidden">
+                <div className="text-6xl mb-6 animate-pulse">🔄</div>
+                <h2 className="text-2xl font-bold text-blue-400 mb-4">Vui lòng xoay ngang điện thoại</h2>
+                <p className="text-gray-300 text-sm">Bàn Poker cần không gian rộng để hiển thị đầy đủ thông tin. Hãy xoay ngang màn hình để trải nghiệm tốt nhất!</p>
+            </div>
+
             {/* Global Navbar */}
             <div className="bg-gray-900 border-b border-gray-800 p-3 flex justify-between items-center z-50">
                 <div className="flex items-center gap-3">
