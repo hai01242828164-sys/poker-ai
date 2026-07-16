@@ -176,12 +176,12 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 // Hero luôn ở góc dưới cùng (90 độ)
                 angleDeg = 90;
             } else {
-                // Phân bổ các ghế còn lại vào cung từ 170 độ đến 370 độ
-                // 170 độ là góc trái (lệch xuống 1 chút). 370 độ (10 độ) là góc phải.
-                // Điều này tạo ra một khoảng trống an toàn từ 90 đến 170 (chính là góc dưới trái)
-                const startAngle = 170;
-                const endAngle = 370;
-                const step = (endAngle - startAngle) / (num_players - 2);
+                // Phân bổ các ghế còn lại vào cung từ 195 độ đến 355 độ
+                // Điều này tạo ra một khoảng trống an toàn rất lớn ở góc dưới-trái (từ 90 đến 195 độ)
+                // Nơi đặt Action Panel, hoàn toàn không bị đè.
+                const startAngle = 195;
+                const endAngle = 355;
+                const step = (endAngle - startAngle) / Math.max(1, (num_players - 2));
                 angleDeg = startAngle + (offsetFromHero - 1) * step;
             }
             
