@@ -29,41 +29,54 @@ export default function HistoryViewer({ sessions, onClose }) {
                                     </div>
                                     
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        {Object.entries(session.globalProfiles).map(([id, profile]) => {
-                                            const isActive = session.config.players.find(p => p.id === id);
-                                            const isHero = profile.isHero || (isActive && isActive.isHero);
-                                            const seatNum = profile.lastKnownSeat || (isActive && isActive.seat) || '?';
+                                        {(() => {
+                                            const profiles = Object.entries(session.globalProfiles).map(([id, profile]) => {
+                                                const isActive = session.config.players.find(p => p.id === id);
+                                                const isHero = profile.isHero || (isActive && isActive.isHero);
+                                                const seatNum = profile.lastKnownSeat || (isActive && isActive.seat) || 999;
+                                                return { id, profile, isActive, isHero, seatNum };
+                                            });
                                             
-                                            const tag = profile.tag || 'Unknown';
-                                            let tagColor = 'text-gray-400';
-                                            if (tag === 'Nit') tagColor = 'text-green-400';
-                                            if (tag === 'TAG') tagColor = 'text-blue-400';
-                                            if (tag === 'LAG') tagColor = 'text-yellow-400';
-                                            if (tag === 'Station') tagColor = 'text-cyan-400';
-                                            if (tag === 'Maniac') tagColor = 'text-red-500';
+                                            // Sắp xếp theo số ghế để dễ dàng hình dung vị trí tương đối trên bàn
+                                            profiles.sort((a, b) => a.seatNum - b.seatNum);
                                             
-                                            const netChips = profile.netChips || 0;
-                                            const chipColor = netChips > 0 ? 'text-green-400' : (netChips < 0 ? 'text-red-400' : 'text-gray-400');
-                                            
-                                            const winrate = profile.hands > 0 ? ((profile.wonHands || 0) / profile.hands) * 100 : 0;
-                                            
-                                            return (
-                                                <div key={id} className={`bg-gray-800 p-3 rounded border ${!isActive ? 'border-gray-700 opacity-60' : 'border-gray-600'} flex flex-col gap-1`}>
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="font-bold text-white text-sm">Ghế {seatNum} {isHero ? '(Hero)' : ''} {!isActive ? <span className="text-xs font-normal text-gray-400 ml-1">(Đã rời)</span> : ''}</span>
-                                                        <span className={`text-xs font-black ${tagColor}`}>[{tag}]</span>
+                                            return profiles.map(({ id, profile, isActive, isHero, seatNum }) => {
+                                                const tag = profile.tag || 'Unknown';
+                                                let tagColor = 'text-gray-400';
+                                                if (tag === 'Nit') tagColor = 'text-green-400';
+                                                if (tag === 'TAG') tagColor = 'text-blue-400';
+                                                if (tag === 'LAG') tagColor = 'text-yellow-400';
+                                                if (tag === 'Station') tagColor = 'text-cyan-400';
+                                                if (tag === 'Maniac') tagColor = 'text-red-500';
+                                                
+                                                const netChips = profile.netChips || 0;
+                                                const chipColor = netChips > 0 ? 'text-green-400' : (netChips < 0 ? 'text-red-400' : 'text-gray-400');
+                                                
+                                                const winrate = profile.hands > 0 ? ((profile.wonHands || 0) / profile.hands) * 100 : 0;
+                                                
+                                                const borderClass = isHero ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] bg-blue-900/30' : (!isActive ? 'border-gray-700 opacity-60 bg-gray-800' : 'border-gray-600 bg-gray-800');
+                                                
+                                                return (
+                                                    <div key={id} className={`p-3 rounded border ${borderClass} flex flex-col gap-1`}>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className={`font-bold text-sm ${isHero ? 'text-blue-300' : 'text-white'}`}>
+                                                                Ghế {seatNum === 999 ? '?' : seatNum} {isHero ? '(Hero)' : ''} 
+                                                                {!isActive ? <span className="text-xs font-normal text-gray-400 ml-1">(Đã rời)</span> : ''}
+                                                            </span>
+                                                            <span className={`text-xs font-black ${tagColor}`}>[{tag}]</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-400 flex justify-between">
+                                                            <span>Winrate:</span>
+                                                            <span className="text-white">{winrate.toFixed(1)}%</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-400 flex justify-between">
+                                                            <span>Net Chip:</span>
+                                                            <span className={`font-bold ${chipColor}`}>{netChips > 0 ? '+' : ''}{netChips}$</span>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-xs text-gray-400 flex justify-between">
-                                                        <span>Winrate:</span>
-                                                        <span className="text-white">{winrate.toFixed(1)}%</span>
-                                                    </div>
-                                                    <div className="text-xs text-gray-400 flex justify-between">
-                                                        <span>Net Chip:</span>
-                                                        <span className={`font-bold ${chipColor}`}>{netChips > 0 ? '+' : ''}{netChips}$</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                                );
+                                            });
+                                        })()}
                                     </div>
                                 </div>
                             );
