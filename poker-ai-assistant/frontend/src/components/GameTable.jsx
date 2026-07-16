@@ -176,11 +176,12 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                 // Hero luôn ở góc dưới cùng (90 độ)
                 angleDeg = 90;
             } else {
-                // Phân bổ các ghế còn lại vào cung từ 195 độ đến 355 độ
-                // Điều này tạo ra một khoảng trống an toàn rất lớn ở góc dưới-trái (từ 90 đến 195 độ)
-                // Nơi đặt Action Panel, hoàn toàn không bị đè.
-                const startAngle = 195;
-                const endAngle = 355;
+                // Ép tất cả các đối thủ còn lại dồn hoàn toàn lên nửa trên của bàn (cung 215 -> 325 độ)
+                // 270 là hướng 12h (trên cùng). 215 là nửa trên bên trái, 325 là nửa trên bên phải.
+                // Điều này giải phóng 100% diện tích nửa dưới của màn hình, bảng Action Panel hay Showdown
+                // panel có to đến mấy cũng vĩnh viễn không bao giờ có cơ hội che đè người chơi.
+                const startAngle = 215;
+                const endAngle = 325;
                 const step = (endAngle - startAngle) / Math.max(1, (num_players - 2));
                 angleDeg = startAngle + (offsetFromHero - 1) * step;
             }
@@ -225,6 +226,9 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
     // States hỗ trợ chức năng sửa lại (Undo/Edit) Action
     const [editingSeat, setEditingSeat] = useState(null);
     const [savedTurnSeat, setSavedTurnSeat] = useState(null);
+
+    // State focus cho vòng Showdown (để highlight avatar khi nhập bài)
+    const [focusedVillainSeat, setFocusedVillainSeat] = useState(null);
 
     // Derived state for Pot, Current Bet, and Player Contributions
     const { pot, currentBet, currentContributions } = useMemo(() => {
@@ -723,6 +727,8 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                                                 type="text" 
                                                 value={villainCards[p.seat] || ''} 
                                                 onChange={e => setVillainCards({...villainCards, [p.seat]: e.target.value})} 
+                                                onFocus={() => setFocusedVillainSeat(p.seat)}
+                                                onBlur={() => setFocusedVillainSeat(null)}
                                                 className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-white text-xs font-mono text-center outline-none focus:border-yellow-500 shadow-inner transition-colors" 
                                                 placeholder="VD: 1c 13b" 
                                             />
@@ -796,7 +802,8 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                             disableAll={isPDisabled}
                             isPostFlop={currentStreetIndex >= 1}
                             onAction={handleAction} 
-                            onAvatarClick={handleAvatarClick}
+                            onAvatarClick={setEditingSeat}
+                            isFocused={focusedVillainSeat === p.seat}
                         />
 
                         {/* Tag Badge */}
