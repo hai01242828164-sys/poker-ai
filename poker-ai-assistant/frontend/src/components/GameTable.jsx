@@ -706,16 +706,47 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                     )}
                 </div>
                 
-                {/* Action Panel - Bottom Left */}
-                <div className="absolute bottom-1 left-1 w-48 sm:w-56 pointer-events-auto scale-90 origin-bottom-left">
-                    <ActionPanel 
-                        isActive={!isActionDisabled} 
-                        isPostFlop={currentStreetIndex >= 1} 
-                        canCheck={canActivePlayerCheck} 
-                        onAction={handleAction} 
-                        playerName={activePlayer ? `Ghế ${activePlayer.seat} - ${activePlayer.label}` : ''} 
-                        isHero={activePlayer ? activePlayer.isHero : false}
-                    />
+                {/* Action Panel / Showdown Panel - Bottom Left */}
+                <div className="absolute bottom-1 left-1 w-48 sm:w-56 pointer-events-auto origin-bottom-left">
+                    {currentStreet === 'SHOWDOWN' ? (
+                        <div className="bg-gray-800/95 backdrop-blur p-4 rounded-xl border border-yellow-500 shadow-[0_0_25px_rgba(234,179,8,0.3)] w-full">
+                            <h3 className="text-yellow-400 font-bold text-sm mb-2 border-b border-gray-700 pb-2">🃏 Nhập Bài Đối Thủ</h3>
+                            <p className="text-[10px] text-gray-400 mb-3 leading-tight">Nhập bài lật (nếu có) để AI tự động đọ bài & lưu lịch sử.</p>
+                            <div className="max-h-[35vh] overflow-y-auto space-y-3 pr-1">
+                                {playersConfig.filter(p => !foldedSeats.has(p.seat) && !p.isHero).map(p => (
+                                    <div key={p.id} className="flex flex-col gap-1 bg-gray-900/50 p-2 rounded border border-gray-700">
+                                        <div className="text-xs font-bold text-gray-300">
+                                            Ghế {p.seat} <span className="text-gray-500 font-normal">({p.label})</span>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <input 
+                                                type="text" 
+                                                value={villainCards[p.seat] || ''} 
+                                                onChange={e => setVillainCards({...villainCards, [p.seat]: e.target.value})} 
+                                                className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-white text-xs font-mono text-center outline-none focus:border-yellow-500 shadow-inner transition-colors" 
+                                                placeholder="VD: 1c 13b" 
+                                            />
+                                            <RenderCards input={villainCards[p.seat] || ''} />
+                                        </div>
+                                    </div>
+                                ))}
+                                {playersConfig.filter(p => !foldedSeats.has(p.seat) && !p.isHero).length === 0 && (
+                                    <div className="text-xs text-gray-500 italic text-center py-2">Không còn đối thủ nào.</div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="scale-90 origin-bottom-left">
+                            <ActionPanel 
+                                isActive={!isActionDisabled} 
+                                isPostFlop={currentStreetIndex >= 1} 
+                                canCheck={canActivePlayerCheck} 
+                                onAction={handleAction} 
+                                playerName={activePlayer ? `Ghế ${activePlayer.seat} - ${activePlayer.label}` : ''} 
+                                isHero={activePlayer ? activePlayer.isHero : false}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -781,14 +812,6 @@ export default function GameTable({ tableConfig, globalProfiles, onHandComplete 
                             </div>
                         )}
                         
-                        {/* Input bài tẩy đối thủ (chỉ ở vòng Showdown) */}
-                        {currentStreet === 'SHOWDOWN' && !foldedSeats.has(p.seat) && !p.isHero && (
-                            <div className="absolute top-24 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-1 bg-gray-800 p-3 rounded-xl border border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.4)] z-50 w-36">
-                                <div className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider">Bài Tẩy</div>
-                                <input type="text" value={villainCards[p.seat] || ''} onChange={e => setVillainCards({...villainCards, [p.seat]: e.target.value})} className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-white text-xs font-mono text-center outline-none focus:border-yellow-500 shadow-inner" placeholder="1c 13b" />
-                                <RenderCards input={villainCards[p.seat] || ''} />
-                            </div>
-                        )}
                     </div>
                 );
             })}
