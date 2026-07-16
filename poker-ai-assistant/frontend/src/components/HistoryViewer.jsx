@@ -29,8 +29,11 @@ export default function HistoryViewer({ sessions, onClose }) {
                                     </div>
                                     
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        {session.config.players.map(p => {
-                                            const profile = session.globalProfiles[p.id] || {};
+                                        {Object.entries(session.globalProfiles).map(([id, profile]) => {
+                                            const isActive = session.config.players.find(p => p.id === id);
+                                            const isHero = profile.isHero || (isActive && isActive.isHero);
+                                            const seatNum = profile.lastKnownSeat || (isActive && isActive.seat) || '?';
+                                            
                                             const tag = profile.tag || 'Unknown';
                                             let tagColor = 'text-gray-400';
                                             if (tag === 'Nit') tagColor = 'text-green-400';
@@ -45,9 +48,9 @@ export default function HistoryViewer({ sessions, onClose }) {
                                             const winrate = profile.hands > 0 ? ((profile.wonHands || 0) / profile.hands) * 100 : 0;
                                             
                                             return (
-                                                <div key={p.id} className="bg-gray-800 p-3 rounded border border-gray-700 flex flex-col gap-1">
+                                                <div key={id} className={`bg-gray-800 p-3 rounded border ${!isActive ? 'border-gray-700 opacity-60' : 'border-gray-600'} flex flex-col gap-1`}>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="font-bold text-white text-sm">Ghế {p.seat} {p.isHero ? '(Hero)' : ''}</span>
+                                                        <span className="font-bold text-white text-sm">Ghế {seatNum} {isHero ? '(Hero)' : ''} {!isActive ? <span className="text-xs font-normal text-gray-400 ml-1">(Đã rời)</span> : ''}</span>
                                                         <span className={`text-xs font-black ${tagColor}`}>[{tag}]</span>
                                                     </div>
                                                     <div className="text-xs text-gray-400 flex justify-between">
