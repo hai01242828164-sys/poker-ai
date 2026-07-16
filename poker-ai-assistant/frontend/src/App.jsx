@@ -77,9 +77,13 @@ export default function App() {
                     newProfiles[p.id] = {
                         hands: 0, vpipHands: 0, pfrHands: 0, 
                         postflopBets: 0, postflopCalls: 0,
-                        wentToShowdown: 0, netChips: 0, wonHands: 0
+                        wentToShowdown: 0, netChips: 0, wonHands: 0,
+                        originalSeat: p.seat,
+                        isHero: p.isHero
                     };
                 }
+                newProfiles[p.id].lastKnownSeat = p.seat;
+                newProfiles[p.id].isHero = p.isHero;
             });
 
             const playerActions = {};
