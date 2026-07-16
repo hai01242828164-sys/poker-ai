@@ -124,40 +124,46 @@ export default function NextHandSetup({ config, onComplete }) {
     };
 
     return (
-        <div className="absolute inset-0 overflow-y-auto bg-gray-900 text-white flex flex-col items-center p-4 font-sans">
+        <div className="absolute inset-0 overflow-y-auto bg-gray-900 text-white flex flex-col items-center justify-center p-2 sm:p-4 font-sans">
             <div className="hidden sm:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-green-900 rounded-[150px] border-[10px] border-amber-900 opacity-20 pointer-events-none"></div>
             
-            <div className="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-lg border border-gray-700 z-10 relative my-auto shrink-0 mt-8 mb-8">
-                <div className="absolute -top-4 -right-4 bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">Setup Ván mới</div>
+            <div className="bg-gray-800 p-4 sm:p-6 rounded-xl shadow-2xl w-full max-w-4xl border border-gray-700 z-10 relative my-auto shrink-0">
+                <div className="absolute -top-3 -right-3 bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">Setup Ván mới</div>
                 
-                <h1 className="text-2xl font-bold mb-6 text-center text-blue-400">Điều chỉnh Bàn Chơi</h1>
+                <h1 className="text-xl sm:text-2xl font-bold mb-4 text-center text-blue-400">Điều chỉnh Bàn Chơi</h1>
                 
-                <div className="space-y-6">
-                    <div className="bg-gray-900 p-4 rounded-lg border border-gray-700 shadow-inner">
-                        <label className="flex items-center gap-2 mb-2 font-bold text-green-400">
-                            <input type="checkbox" className="w-4 h-4 rounded text-green-500" onChange={e => { if(!e.target.checked) setAddPositions("")}} />
-                            Thêm người chơi
-                        </label>
-                        <p className="text-xs text-gray-400 mb-2">Nhập vị trí thêm (Tính theo chiều kim đồng hồ từ Hero=0). VD: <span className="text-white">1, 3</span> sẽ chèn người mới vào trước ghế 1 và ghế 3.</p>
-                        <input type="text" value={addPositions} onChange={e => setAddPositions(e.target.value)} placeholder="VD: 1, 3" className="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white outline-none focus:border-green-500 font-mono tracking-widest text-lg" />
-                    </div>
+                <div className="flex flex-col gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 shadow-inner flex flex-col justify-between">
+                            <div>
+                                <label className="flex items-center gap-2 mb-1 font-bold text-green-400 text-sm">
+                                    <input type="checkbox" className="w-3 h-3 rounded text-green-500" onChange={e => { if(!e.target.checked) setAddPositions("")}} />
+                                    Thêm người chơi
+                                </label>
+                                <p className="text-[10px] text-gray-400 mb-2 leading-tight">Vị trí (từ Hero=0). VD: <span className="text-white">1, 3</span> (chèn trước ghế 1 và 3).</p>
+                            </div>
+                            <input type="text" value={addPositions} onChange={e => setAddPositions(e.target.value)} placeholder="VD: 1, 3" className="w-full bg-gray-800 border border-gray-600 rounded p-1.5 text-white outline-none focus:border-green-500 font-mono text-sm" />
+                        </div>
 
-                    <div className="bg-gray-900 p-4 rounded-lg border border-gray-700 shadow-inner">
-                        <label className="flex items-center gap-2 mb-2 font-bold text-red-400">
-                            <input type="checkbox" className="w-4 h-4 rounded text-red-500" onChange={e => { if(!e.target.checked) setRemovePositions("")}} />
-                            Bớt người chơi
-                        </label>
-                        <p className="text-xs text-gray-400 mb-2">Nhập vị trí người cần bớt (Tính từ Hero=0). VD: <span className="text-white">2, 5</span> sẽ đuổi người ở vị trí 2 và 5.</p>
-                        <input type="text" value={removePositions} onChange={e => setRemovePositions(e.target.value)} placeholder="VD: 2, 5" className="w-full bg-gray-800 border border-gray-600 rounded p-2 text-white outline-none focus:border-red-500 font-mono tracking-widest text-lg" />
+                        <div className="bg-gray-900 p-3 rounded-lg border border-gray-700 shadow-inner flex flex-col justify-between">
+                            <div>
+                                <label className="flex items-center gap-2 mb-1 font-bold text-red-400 text-sm">
+                                    <input type="checkbox" className="w-3 h-3 rounded text-red-500" onChange={e => { if(!e.target.checked) setRemovePositions("")}} />
+                                    Bớt người chơi
+                                </label>
+                                <p className="text-[10px] text-gray-400 mb-2 leading-tight">Vị trí (từ Hero=0). VD: <span className="text-white">2, 5</span> (đuổi vị trí 2 và 5).</p>
+                            </div>
+                            <input type="text" value={removePositions} onChange={e => setRemovePositions(e.target.value)} placeholder="VD: 2, 5" className="w-full bg-gray-800 border border-gray-600 rounded p-1.5 text-white outline-none focus:border-red-500 font-mono text-sm" />
+                        </div>
                     </div>
 
                     {error && (
-                        <div className="bg-red-900 border border-red-500 text-red-200 px-4 py-2 rounded text-sm text-center font-bold animate-bounce">
+                        <div className="bg-red-900 border border-red-500 text-red-200 px-3 py-1.5 rounded text-xs text-center font-bold animate-bounce">
                             {error}
                         </div>
                     )}
 
-                    <button onClick={handleNext} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] transform hover:-translate-y-1 mt-4">
+                    <button onClick={handleNext} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] transform hover:-translate-y-1 mt-1">
                         Tạo Ván Mới ➔
                     </button>
                 </div>
